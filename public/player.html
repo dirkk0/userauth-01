@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/kimeiga/bahunya/dist/bahunya.min.css" /> -->
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/picnic"/> -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css" />
+  <!-- <link rel="stylesheet" href="water.css" /> -->
+  <!-- <link rel="stylesheet" href="player.css" /> -->
+  <!-- <link rel="stylesheet" href="main.css" /> -->
+
+  <style>
+    .idx {
+      width: 90px;
+    }
+
+    span {
+      cursor: pointer;
+      user-select: none;
+    }
+  </style>
+
+  <script>
+    "use strict"
+    window.appName = "rdioPlayer"
+    window.appVersion = "1.0.0"
+    console.log(window.appName, window.appVersion)
+  </script>
+
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script> -->
+  <!-- <script src="lz-string.min.js"></script> -->
+
+  <script src="form-maker.js" type="module"></script>
+  <!-- <script src="https://www.youtube.com/iframe_api"></script> -->
+</head>
+
+<body>
+  <a href="1">back</a>
+  <!-- <div id="drop-zone">aaaa</div> -->
+  <!-- <button id="clear-storage">Clear LocalStorage</button> -->
+  <input type="file" id="file-input" accept=".json" />
+
+  <h2 id="msg1" hidden></h2>
+  <div id="msg2" hidden></div>
+
+  <form id="dynamic-form">
+    <!-- Dynamic fields will be created here -->
+  </form>
+  <pre id="result" hidden></pre>
+
+  <!--Youtube-->
+  <!-- <div id="player"></div> -->
+  <div id="player" style="display: none; visibility: hidden"></div>
+
+  <div id="now">&nbsp;</div>
+
+  <!--Player-->
+  <div class="audio-player">
+    <div class="player-controls">
+      <!-- <div id="radioIcon"></div> -->
+      <button id="playAudio"></button>
+      <div id="seekObjContainer">
+        <div id="seekObj">
+          <div id="percentage"></div>
+        </div>
+      </div>
+      <p><small id="currentTime">00:00</small></p>
+    </div>
+  </div>
+
+  <div id="search-container">
+    <input id="search" placeholder="search" DIS-value="straight" style="display: inline-block" oninput="search()" />
+    <button onclick="yt_mgr.search()">search</button>
+  </div>
+
+  <a href="index.html">no parameters</a> |
+  <a href="index.html?dd2=example.json">example json</a> |
+  <a href="index.html?dd1=Tm9JZ0tnRmdsZ3pnQkxPQVhDQlRaVWtCdFVCMEIyQWd2Z0NiTFR5SXJvbW93REdBVGxBQTVKUUQyK0lBTkNBT3BSOFNWSXpnQmxEbGhqdDZxWGlBRFdyQUZhTUF0QUdZQWJnQVVBa2dFMEYrLVBnNXpoY0FLSUJQT2dvNktBckpvQWlBTXc0ZjFBY1dOOENrR0JBTHBBQQ%3D%3D">example url</a> |
+  <!-- <a href="index.html?dd2=data.json">big json</a> | -->
+  <!-- <a href="editor.html">editor</a> | -->
+  <a href="editor.html" id="editor1">editor</a> |
+  <a href="#" onclick="localStorage.clear('data')">clear localStorage</a>
+  <!-- <a href="cassette.html">cassette</a> -->
+  
+
+  <div id="list">empty</div>
+
+  <footer>
+    <span id="version">ss</span>
+  </footer>
+
+  <script>
+    const tag = document.createElement("script")
+    tag.src = "https://www.youtube.com/iframe_api"
+    var firstScriptTag = document.getElementsByTagName("script")[0]
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag)
+
+    function onYouTubeIframeAPIReady() {
+      ytPlayer = new YT.Player("player", {
+        height: "0",
+        width: "0",
+        playerVars: {
+          playsinline: true,
+          autoplay: 1,
+          loop: 0,
+        },
+        videoId: "",
+        // events: {
+        //   'onReady': onPlayerReady,
+        //   'onStateChange': onPlayerStateChange,
+        //   'onError': (err) => { console.log(err) }
+        // }
+      })
+      main(ytPlayer)
+    }
+  </script>
+  <script type="module">
+    "use strict"
+
+    import { ytManager } from "./player.js"
+
+    // https://developers.google.com/youtube/iframe_api_reference#Getting_Started
+
+    window.main = async (par) => {
+      // console.log("main", par)
+      window.yt_mgr = new ytManager(ytPlayer)
+
+      ytPlayer.addEventListener("onReady", yt_mgr.onPlayerReady)
+      ytPlayer.addEventListener("onStateChange", yt_mgr.onPlayerStateChange)
+    }
+
+    // https://stackoverflow.com/a/14238245/1129915
+    // function dragEnterLeave(e) {
+    //   e.preventDefault();
+    //   e.stopPropagation();
+    // }
+
+    // function dragOver(e) {
+    //   e.preventDefault();
+    //   e.stopPropagation();
+    //   e.dataTransfer.dropEffect = "copy";
+    // }
+
+    // async function drop(e) {
+    //   e.preventDefault();
+    //   e.stopPropagation();
+    //   const files = e.dataTransfer.files;
+    //   // if (files.length > 1) {
+    //   //   console.log("Only one file at a time, please.")
+    //   //   return;
+    //   // }
+    //   const file = files[0];
+    //   console.log(file)
+    //   // const text = await file.text();
+
+    //   const reader = new FileReader()
+    //   reader.onload = async (evt) => {
+    //     // const molString = evt.target.result
+    //     console.log(evt)
+
+    //     // if (type == "txt") {
+    //     // let script = evt.target.result
+    //     // console.log(script)
+    //     // }
+
+    //   }
+    //   setTimeout(() => {
+    //     console.log(888)
+    //     reader.readAsText(file)
+
+    //   }, 1000)
+    //   // console.log(reader)
+    //   // // const data = JSON.parse(text);
+    //   // // yt_mgr.load(data);
+    //   // console.log("loaded:", text);
+    // }
+
+    // document.addEventListener("dragenter", dragEnterLeave);
+    // document.addEventListener("dragleave", dragEnterLeave);
+    // document.addEventListener("dragover", dragOver);
+    // document.addEventListener("drop", drop);
+
+    const fileInput = document.getElementById("file-input")
+
+    // const clearStorage = document.getElementById("clear-storage") 
+    // clearStorage.addEventListener("click", () => {
+    //   localStorage.clear("data")
+    //   window.location.reload()
+    // })
+
+    function handleFile(file) {
+      if (file.type === "application/json") {
+        const reader = new FileReader()
+        reader.onload = (event) => {
+          console.log("loaded:", event.target.result)
+          const jsonData = JSON.parse(event.target.result)
+          // console.log(jsonData);
+          window.yt_mgr.update(jsonData)
+        }
+        reader.readAsText(file)
+      } else {
+        alert("Please select a JSON file.")
+      }
+    }
+
+    // const dropZone = document.getElementById("drop-zone")
+
+    // dropZone.addEventListener('dragover', (event) => {
+    //   event.preventDefault();
+    //   dropZone.classList.add('dragover');
+    // });
+
+    // dropZone.addEventListener('dragleave', () => {
+    //   dropZone.classList.remove('dragover');
+    // });
+
+    // dropZone.addEventListener("drop", (event) => {
+    //   event.preventDefault()
+    //   dropZone.classList.remove("dragover")
+
+    //   const file = event.dataTransfer.files[0]
+    //   handleFile(file)
+    // })
+
+    fileInput.addEventListener("change", (event) => {
+      console.log("change")
+
+      const file = fileInput.files[0]
+      handleFile(file)
+      event.srcElement.value = ""
+    })
+  </script>
+</body>
+
+</html>

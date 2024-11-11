@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User File Editor</title>
+
+    <!-- <link type="text/css" rel="stylesheet" href="style.css" /> -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'  transform='scale(1)'>
+          <text y='.9em' font-size='90'>🐔</text>
+        </svg>"
+    />
+    <meta name="google" content="notranslate" />
+
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css" /> -->
+    <meta name="google" content="notranslate" />
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 500px;
+        margin: auto;
+      }
+      .hidden {
+        display: none;
+      }
+      li {
+        font-family: "Courier New", Courier, monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>User Login</h2>
+
+    <a href="/admin">admin</a>
+    <a href="/playlist">playlist</a>
+    <a href="/player/index.html?load-json=../data/data.json">player</a>
+
+    <!-- Login Section -->
+    <div id="login-section">
+      <form id="login-form">
+        <label for="email">Email:</label><br />
+        <input type="email" id="email" name="email" required /><br /><br />
+        <label for="password">Password:</label><br />
+        <input type="password" id="password" name="password" required /><br /><br />
+        <button type="submit">Login</button>
+        <p id="login-message"></p>
+      </form>
+      <button onclick="showRegistration()">Register</button>
+    </div>
+
+    <!-- Registration Section -->
+    <div id="registration-section" class="hidden">
+      <h2>Register</h2>
+      <form id="registration-form">
+        <label for="reg-email">Email:</label><br />
+        <input type="email" id="reg-email" name="email" required /><br /><br />
+        <label for="reg-password">Password:</label><br />
+        <input type="password" id="reg-password" name="password" required /><br /><br />
+        <label for="reg-password-confirm">Confirm Password:</label><br />
+        <input type="password" id="reg-password-confirm" required /><br /><br />
+        <button type="submit">Register</button>
+        <p id="registration-message"></p>
+      </form>
+      <button onclick="showLogin()">Back to Login</button>
+    </div>
+
+    <!-- Data Section -->
+    <div id="data-section" class="hidden">
+      <h2>Welcome</h2>
+      <button id="logout-button">Logout</button>
+      <div id="data-content">
+        <p>Loading files...</p>
+      </div>
+
+      <!-- Editor for file content -->
+      <div id="editor-section" class="hidden">
+        <h3>Editing: <span id="file-name"></span></h3>
+        <textarea id="file-content" rows="10" cols="50"></textarea><br />
+        <button id="save-button">Save</button>
+        <p id="save-message"></p>
+      </div>
+
+      <!-- Create New File Section -->
+      <div id="create-file-section">
+        <h3>Create New File</h3>
+        <input type="text" id="new-filename" placeholder="Enter file name" required /><br />
+        <textarea id="new-file-content" rows="5" cols="50" placeholder="Enter file content"></textarea><br />
+        <button id="create-file-button">Create File</button>
+        <p id="create-message"></p>
+      </div>
+      
+      <!-- Password Change Form -->
+      <div id="change-password">
+        <h2>Change Password</h2>
+        <form id="changePasswordForm">
+          <label for="oldPassword">Old Password:</label>
+          <input type="password" id="oldPassword" name="oldPassword" required />
+
+          <label for="newPassword">New Password:</label>
+          <input type="password" id="newPassword" name="newPassword" required />
+
+          <button type="submit">Change Password</button>
+        </form>
+        <p id="changePasswordMessage"></p>
+      </div>
+    </div>
+
+    <script>
+      const loginForm = document.getElementById("login-form")
+      const loginSection = document.getElementById("login-section")
+      const dataSection = document.getElementById("data-section")
+      const dataContent = document.getElementById("data-content")
+      const loginMessage = document.getElementById("login-message")
+      const logoutButton = document.getElementById("logout-button")
+      const editorSection = document.getElementById("editor-section")
+      const fileNameDisplay = document.getElementById("file-name")
+      const fileContentArea = document.getElementById("file-content")
+      const saveButton = document.getElementById("save-button")
+      const saveMessage = document.getElementById("save-message")
+      const createFileButton = document.getElementById("create-file-button")
+      const newFilenameInput = document.getElementById("new-filename")
+      const newFileContentArea = document.getElementById("new-file-content")
+      const createMessage = document.getElementById("create-message")
+
+      const registrationSection = document.getElementById("registration-section")
+      const registrationForm = document.getElementById("registration-form")
+      const registrationMessage = document.getElementById("registration-message")
+
+      window.addEventListener("load", async () => {
+        try {
+          const response = await fetch("/session")
+          const data = await response.json()
+
+          if (data.loggedIn) {
+            loginSection.classList.add("hidden")
+            dataSection.classList.remove("hidden")
+            loadUserData()
+          } else {
+            loginSection.classList.remove("hidden")
+            dataSection.classList.add("hidden")
+          }
+        } catch (error) {
+          console.error("Error checking login status:", error)
+        }
+      })
+
+      loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault()
+        const email = document.getElementById("email").value
+        const password = document.getElementById("password").value
+
+        try {
+          const response = await fetch("/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ email, password }),
+          })
+
+          if (response.ok) {
+            loginSection.classList.add("hidden")
+            dataSection.classList.remove("hidden")
+            loadUserData()
+          } else {
+            console.log(response)
+            // loginMessage.textContent = "Login failed. Please try again."
+            loginMessage.textContent = response.status + " " + response.statusText
+          }
+        } catch (error) {
+          console.error("Error logging in:", error)
+          loginMessage.textContent = "An error occurred. Please try again."
+        }
+      })
+
+      async function loadUserData() {
+        try {
+          const response = await fetch("/data")
+          if (response.ok) {
+            const data = await response.json()
+
+            if (data.files && data.files.length > 0) {
+              dataContent.innerHTML =
+                "<ul>" +
+                data.files
+                  .map(
+                    (file) => `
+                <li>
+
+                  <!-- a href="/view/${file}">${file}</a>
+                  <a href="#" onclick="editFile('${file}')">${file}</a -->
+                  <button onclick="document.location.href='/view/${file}'">View</button>
+                  <button onclick="editFile('${file}')">Edit</button>
+                  <button onclick="deleteFile('${file}')">Delete</button>
+
+                  ${file}
+
+                </li>
+              `
+                  )
+                  .join("") +
+                "</ul>"
+            } else {
+              dataContent.innerHTML = "<p>No files found.</p>"
+            }
+          } else {
+            dataContent.innerHTML = "Failed to load data."
+          }
+        } catch (error) {
+          dataContent.innerHTML = "An error occurred while loading data."
+        }
+      }
+
+      // Create a new file
+      createFileButton.addEventListener("click", async () => {
+        const filename = newFilenameInput.value.trim()
+        const content = newFileContentArea.value
+
+        if (!filename) {
+          createMessage.textContent = "File name is required."
+          return
+        }
+
+        try {
+          const response = await fetch("/data", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ filename, content }),
+          })
+
+          if (response.ok) {
+            createMessage.textContent = "File created successfully."
+            loadUserData() // Refresh the file list
+            newFilenameInput.value = ""
+            newFileContentArea.value = ""
+          } else {
+            const data = await response.json()
+            createMessage.textContent = data.message || "Failed to create file."
+          }
+        } catch (error) {
+          createMessage.textContent = "An error occurred. Please try again."
+        }
+      })
+
+      // Delete a file
+      async function deleteFile(filename) {
+        try {
+          const response = await fetch(`/data/${filename}`, {
+            method: "DELETE",
+          })
+
+          if (response.ok) {
+            loadUserData() // Refresh the file list
+          } else {
+            alert("Failed to delete file.")
+          }
+        } catch (error) {
+          alert("An error occurred while deleting the file.")
+        }
+      }
+
+      async function editFile(filename) {
+        try {
+          const response = await fetch(`/data/${filename}`)
+          if (response.ok) {
+            const data = await response.json()
+            fileNameDisplay.textContent = filename
+            fileContentArea.value = data.content
+            editorSection.classList.remove("hidden")
+          } else {
+            alert("Failed to load file content.")
+          }
+        } catch (error) {
+          alert("An error occurred while loading file content.")
+        }
+      }
+
+      saveButton.addEventListener("click", async () => {
+        const filename = fileNameDisplay.textContent
+        const content = fileContentArea.value
+
+        try {
+          const response = await fetch(`/data/${filename}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content }),
+          })
+
+          if (response.ok) {
+            saveMessage.textContent = "File saved successfully."
+          } else {
+            saveMessage.textContent = "Failed to save file."
+          }
+        } catch (error) {
+          saveMessage.textContent = "An error occurred while saving."
+        }
+      })
+
+      logoutButton.addEventListener("click", async () => {
+        await fetch("/logout", { method: "POST" })
+        loginSection.classList.remove("hidden")
+        dataSection.classList.add("hidden")
+        loginMessage.textContent = ""
+        loginForm.reset()
+      })
+
+      // Show registration form
+      function showRegistration() {
+        loginSection.classList.add("hidden")
+        registrationSection.classList.remove("hidden")
+      }
+
+      // Show login form
+      function showLogin() {
+        registrationSection.classList.add("hidden")
+        loginSection.classList.remove("hidden")
+      }
+
+      // Handle registration
+      registrationForm.addEventListener("submit", async (event) => {
+        event.preventDefault()
+        const email = document.getElementById("reg-email").value
+        const password = document.getElementById("reg-password").value
+        const passwordConfirm = document.getElementById("reg-password-confirm").value
+
+        if (password !== passwordConfirm) {
+          registrationMessage.textContent = "Passwords do not match."
+          return
+        }
+
+        try {
+          const response = await fetch("/register", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+          })
+
+          if (response.ok) {
+            registrationMessage.textContent = "Registration successful. You can now log in."
+          } else {
+            const data = await response.json()
+            registrationMessage.textContent = data.message || "Registration failed."
+          }
+        } catch (error) {
+          registrationMessage.textContent = "An error occurred. Please try again."
+        }
+      })
+
+      function cheat() {
+        console.log(888)
+        document.getElementById("email").value = "test@example.com"
+        document.getElementById("password").value = "p1"
+      }
+      setTimeout(() => {
+        cheat()
+      }, 500)
+    </script>
+
+    <script>
+      // Handle Password Change Form submission
+      document.getElementById("changePasswordForm").addEventListener("submit", async (event) => {
+        event.preventDefault()
+
+        const oldPassword = document.getElementById("oldPassword").value
+        const newPassword = document.getElementById("newPassword").value
+
+        try {
+          const response = await fetch("/change-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ oldPassword, newPassword }),
+          })
+
+          const data = await response.json()
+          document.getElementById("changePasswordMessage").textContent = data.message
+
+          if (response.ok) {
+            alert("Password changed successfully.")
+          } else {
+            alert("Password change failed: " + data.message)
+          }
+        } catch (error) {
+          console.error("Error changing password:", error)
+        }
+      })
+    </script>
+  </body>
+</html>

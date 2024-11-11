@@ -1,0 +1,14 @@
+[
+  {
+    "id": "d58dfd46",
+    "email": "test1@example.com",
+    "password": "$2b$10$jy6viSW2Jb728bdCKjbajuu9jzP7vGvoPluFwLZVUcmSGx406QMEC",
+    "activated": true
+  },
+  {
+    "id": "d423279f",
+    "email": "test@example.com",
+    "password": "$2b$10$MBZFDVUKRUmTomb2SE1RwuS31wZV.gxlthr3TT3j.c3niANIN6JVu",
+    "activated": true
+  }
+]
