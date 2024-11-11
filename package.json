@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node --env-file=.env server.js",
+    "start": "node server.js",
     "local": "node server.js",
     "dev": "nodemon --env-file=.env server.js --ignore protected/ --ignore public/ --ignore data/",
     "transfer": "cd ..;./transfer.sh",
